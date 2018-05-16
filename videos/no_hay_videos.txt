@@ -1,0 +1,1 @@
+para no tener problemas al usar videos/video.mp4 se crea esta carpeta para que no muestre error en la interfaz 
