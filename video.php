@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <?php
 session_start();
+if ($_SESSION["autenticado"] != "SI"){
+            echo '<script>alert("No ah ingresado al sistema, por favor ingrese sus datos")</script> ';
+            echo "<script>location.href='index.php'</script>";}
+            
 
 $idUser =$_SESSION['idUser'];
 $idVideo_temp = $_GET['idVideo'];
@@ -10,6 +14,7 @@ $descripcionPrincipal = "";
 $categoriaPrincipal = "";
 $urlPrincipal = "";
 include("conexion.php");
+include ("abrir_conexion.php");
 $A1_video1 = mysqli_query($conn, "SELECT * FROM videos WHERE idVideo='$idVideo_temp'");
 if ($dataVideo1 = mysqli_fetch_assoc($A1_video1)) {
     $idVideoPrincipal = $dataVideo1['idVideo'];
@@ -25,7 +30,14 @@ if ($dataVideo1 = mysqli_fetch_assoc($A1_video1)) {
         <?php $idVideoPHP = $idVideoPrincipal; ?>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">       
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    
+        <link rel="stylesheet" type="text/css" href="dist/css/barraVideo.css">
+        <script type="text/javascript" src="dist/js/controlesVideo.js"></script>
+        <script type="text/javascript" src="./lib_Aff/jquery-3.1.0.js"></script>
+        <script type="text/javascript" src="./lib_Aff/bootstrap.min.js"></script>	
+        <script type="text/javascript" src="js/3.2/affdex.js"></script>
+      
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
         <script type="text/javascript">
@@ -42,6 +54,24 @@ if ($dataVideo1 = mysqli_fetch_assoc($A1_video1)) {
         <link rel="stylesheet" href="plugins/iCheck/square/blue.css">
         <link rel="stylesheet" href="dist/css/skins/_all-skins.min.css">
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">  
+        <script>
+        $(document).ready(function(){                   
+            $("#enviar").click(function(){
+                var formulario = $("#frminformacion").serializeArray();
+                $.ajax({
+                    type: "POST",
+                    dataType: 'json',
+                    url: "guardar.php",
+                    data: formulario,
+                }).done(function(respuesta){
+                    $("#mensaje").html(respuesta.mensaje);
+                    limpiarformulario("#frminformacion");
+                });
+            });
+            
+
+        });
+        </script>
         <style>
             input[type = "radio"]{ display:none;/*position: absolute;top: -1000em;*/}
             label{ color:grey;}
@@ -64,7 +94,7 @@ if ($dataVideo1 = mysqli_fetch_assoc($A1_video1)) {
     <nav class="navbar navbar-static-top">
       <div class="container">
         <div class="navbar-header">
-          <a href="inicioUsuario.php" class="navbar-brand"><b>VoD Enfasis 4</b></a>
+          <a onclick="onSiguiente()" href="inicioUsuario.php" class="navbar-brand"><b>VoD Enfasis 4</b></a>
         </div> 
         <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
           <ul class="nav navbar-nav" >
@@ -96,11 +126,11 @@ if ($dataVideo1 = mysqli_fetch_assoc($A1_video1)) {
                 <li class="user-body">
                     <div class="btn-group btn-group-justified" role="group" aria-label="...">
                          <div class="btn-group" role="group">
-                             <a href="perfil.php" class="btn btn-default btn-flat">Perfil</a>
+                             <a  onclick="onSiguiente()" href="perfil.php" class="btn btn-default btn-flat">Perfil</a>
                          </div>
                   
                          <div class="btn-group" role="group">
-                             <a href="cerrarSesion.php" class="btn btn-default btn-flat">Salir</a>
+                             <a  onclick="onSiguiente()" href="cerrarSesion.php" class="btn btn-default btn-flat">Salir</a>
                          </div>
                     </div>
                 </li>
@@ -116,8 +146,14 @@ if ($dataVideo1 = mysqli_fetch_assoc($A1_video1)) {
   </header>
  <?php
 $valor=0;
-if(isset($_POST["estrellas"]))
-$valor=$_POST["estrellas"]; 
+$resultadose = mysqli_query($conexion,"SELECT *FROM $tabla_db4  WHERE `idUser`='$idUser' AND `idVideo`='$idVideoPrincipal'");
+$row1 = $resultadose->fetch_array(MYSQLI_NUM);
+$numero_filas = $resultadose->num_rows;
+if ($numero_filas > 0)
+  {
+    $valor=$row1[4];
+  }
+
 ?>
 
    <div class="content-wrapper">
@@ -146,8 +182,45 @@ $valor=$_POST["estrellas"];
                                     <script type="text/javascript" src="./lib_Aff/adapter-1.4.0.js"></script>
                                 </div-->
                                 <div align="center">
-                                    <video src="videos/<?php echo $urlPrincipal;?>.mp4" preload controls poster="videos/marcos/<?php echo $urlPrincipal;?>.jpg" style="width: 838px; height: 500px;">                                          
+                                    <!--
+                                        <video  id="affdex_elements" 
+                                        src="videos/<?php echo $urlPrincipal;?>.mp4" preload  
+                                        poster="videos/marcos/<?php echo $urlPrincipal;?>.jpg" 
+                                        style="width: 838px; height: 500px;">                                          
                                     </video>
+                                    <button id="start" onclick="onStart()" >Start</button>
+                                    <button id="stop" onclick="onStop()">Stop</button>
+                                    <button id="reset" onclick="onSiguiente()">Siguiente</button>  
+                                     -->
+                                    <div id="video_player_box">
+                                       <video  id="affdex_elements" 
+                                            src="videos/<?php echo $urlPrincipal;?>.mp4" preload  
+                                            poster="videos/marcos/<?php echo $urlPrincipal;?>.jpg" 
+                                            style="width: 838px; height: 500px;">                                          
+                                        </video>
+                                        <div id="video_controls_bar">
+                                            <div class="row">
+                                            <div class="col-md-1">
+                                            <button id="playpausebtn" onclick="onStart()" ></button>
+                                            </div>
+                                             <div class="col-md-4">
+                                            <input id="seekslider" type="range" min="0" max="100" value="0" step="1">
+                                            </div>
+                                             <div class="col-md-3">
+                                            <span id="curtimetext">00:00</span> / <span id="durtimetext">00:00</span>
+                                            </div>
+                                             <div class="col-md-1">
+                                            <button id="mutebtn"></button>
+                                            </div>
+                                             <div class="col-md-2">
+                                            <input id="volumeslider" type="range" min="0" max="100" value="100" step="1">
+                                            </div>
+                                             <div class="col-md-1">
+                                            <button id="fullscreenbtn"></button>
+                                            </div>
+                                             </div>
+                                        </div>
+                                    </div>
                                 </div>		
                             </div>
                                 <div class="box box-solid">
@@ -158,7 +231,7 @@ $valor=$_POST["estrellas"];
                                                     <h1 style="vertical-align: text-top;"><?php echo utf8_encode($namePrincipal); ?></h1>
                                                 </div>
                                                 <div class="col-md-4">
-                                                    <form name="input" action="index.php" method="post">                                                    
+                                                <form id="frminformacion" name="frminformacion">                                                    
                                                         <p class="clasificacion">
                                                         <input id="radio1" type="radio" name="estrellas" value="5" <?php if($valor==5) echo "checked";?>>
                                                         <label for="radio1"><font size="20">&#9733;</font></label>
@@ -170,16 +243,17 @@ $valor=$_POST["estrellas"];
                                                         <label for="radio4"><font size="20">&#9733;</font></label>
                                                         <input id="radio5" type="radio" name="estrellas" value="1" <?php if($valor==1) echo "checked";?>>
                                                         <label for="radio5"><font size="20">&#9733;</font></label>
-                                                        </p>                                                
-                                                    </form>
+                                                        </p> 
+
+                                               
                                                 </div>
                                                 <div class="col-md-2">
-                                                    <button id="btn_regCalificacion" type="button"
-                                                            class="btn bg-primary  margin"
-                                                            style="text-align: left;">Enviar
-                                                        <i class="fa fa-play"></i>
-                                                    </button>
-                                                </div>
+                                                        <input type=hidden value="<?php echo $idUser;?>" name="iduser">
+                                                        <br>
+                                                        <input type=hidden value="<?php echo $idVideoPrincipal;?>" name="idvideo">
+                                                        <input type=hidden value="<?php echo $categoriaPrincipal;?>" name="categoriav">
+                                                        <input type="button" id="enviar" value="Enviar" name="enviar" />
+                                                </div> </form>
                                             </div>
                                         
                                         <i class="fa fa-text-width"></i>
@@ -192,24 +266,48 @@ $valor=$_POST["estrellas"];
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">           
+                                                        <div class="col-md-3">           
                                 <div class="box box-default">
-                                    <div class="box-header with-border">
-                                       <h4><center>Se Recomienda La Categoria Actual</center></h4>
-                                    </div>
+                                    
                                     <!-- /.box-header -->
                                     <div class="box-body">
                                         <center>
 
                                          <?php
-                                        include ("abrir_conexion.php");
-
+                                         include ("abrir_conexion.php");
+                                         include('sistemaR.php');
+                                         $answer = mainRecomendation($idUser,$idVideoPrincipal);
+                                         foreach ($answer as $clave => $valor) {
+                                                $resultados = mysqli_query($conexion,"SELECT *FROM $tabla_db2  WHERE `idVideo`='$valor'");
+                                              
+                                                 while($consulta = mysqli_fetch_array($resultados))
+                                                  { 
+                                                    echo '<div> 
+                                                    <a onclick="onSiguiente()" href="video.php?idVideo='.$consulta['idVideo'].'" id="btn_play_video_rec1" type="button"
+                                                            style="text-align: left;">
+                                                    '.utf8_encode($consulta['name']).'
+                                                    <video src="videos/'.$consulta['urlVideo'].'.mp4"  poster="videos/marcos/'.$consulta['urlVideo'].'.jpg" style="width: 300px; height: 210px;">                                          
+                                                    </video>
+                                                 
+                                                    
+                                                    </a>
+                                                    </div>
+                                                    
+                                                ';} 
+                                         }
+                                     
                                         $resultados = mysqli_query($conexion,"SELECT *FROM $tabla_db2  WHERE `categoria`='$categoriaPrincipal' AND `idVideo`!='$idVideoPrincipal'");
                                         
                                         while($consulta = mysqli_fetch_array($resultados))
                                           { 
+                                            $esta=0;
+                                            foreach ($answer as $clave => $valor) {
+                                                if($consulta['idVideo']==$valor)
+                                                    $esta=1;
+                                            }   
+                                            if($esta==0){    
                                             echo '<div> 
-                                            <a href="video.php?idVideo='.$consulta['idVideo'].'" id="btn_play_video_rec1" type="button"
+                                            <a onclick="onSiguiente()" href="video.php?idVideo='.$consulta['idVideo'].'" id="btn_play_video_rec1" type="button"
                                                     style="text-align: left;">
                                             '.utf8_encode($consulta['name']).'
                                             <video src="videos/'.$consulta['urlVideo'].'.mp4"  poster="videos/marcos/'.$consulta['urlVideo'].'.jpg" style="width: 300px; height: 210px;">                                          
@@ -219,7 +317,7 @@ $valor=$_POST["estrellas"];
                                             </a>
                                             </div>
                                             
-                                        ';}  
+                                        ';}}  
                                          include("cerrar_conexion.php"); ?>
                                         </center>
                                     </div>
@@ -231,7 +329,6 @@ $valor=$_POST["estrellas"];
 
                         </div>
                     </div>
-
                     <!-- Default box -->
 
 
@@ -271,5 +368,21 @@ $valor=$_POST["estrellas"];
                 $('.sidebar-menu').tree()
             })
         </script>
+
+
+
+        <!-- si se quiere ver los valores muestreados en tiempo real
+            Descomentar
+                <strong>DATOS EN TIEMPO REAL</strong>
+                <div id="results" style="word-wrap:break-word;"></div>             
+                <strong>DETECCIÓN DE ACCIONES</strong>
+                <div id="logs"></div> --> 
+                <section id="contenedor" ></section> 
+          
+        
     </body>
+    
+<script type="text/javascript" src="js/reconocimiento4.js"></script>
+<script type="text/javascript" src="js/load.js"></script>
+
 </html>
